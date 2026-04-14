@@ -70,7 +70,7 @@ sleepstudy %>%
 `distinct` finds all the unique rows in a data set and then primarily operates on those rows. I’m actually going to be using a different data set. This is the Dark Triad data set.
 
 ```{r}
-SD3_data <- read_csv("C://Users//thomp//remote//r4ds-2e//downloaded_datasets//SD3_data.csv")
+SD3_data <- read_csv("C://Users//thomp//remote//r-reference//downloaded_datasets//SD3_data.csv")
 print(SD3_data)
 ```
 
