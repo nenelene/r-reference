@@ -10,7 +10,7 @@ output: pdf_document
 -   `library(tidyverse)`
 -   `library(dbplyr)`
 
-## Prerequisites and intro to dplyr
+## Rows
 
 First, load tidyverse:
 
@@ -101,4 +101,5 @@ You can also use the `count()` command to find the number of occurrences instead
 SD3_data %>%
   count(P1, country, sort=TRUE)
 ```
+## Columns
 
