@@ -18,88 +18,116 @@ First, load tidyverse:
 library(tidyverse)
 ```
 
-Then, we need to load some data. We are going to load the sleep study data. This is what we are going to be using.
+Then, we need to load some data. We are going to load the flights data. This is what we are going to be using.
 
 ```{r}
-library(lme4)
-data(sleepstudy)
-head(sleepstudy)
+library(nycflights13)
+flights
 ```
 
-### `filter()` command
+### `filter()`
 
-Next we can use the `filter()` command to filter out some of the data. Let’s say we want to filter out reaction times greater than 200ms:
+Next we can use the `filter()` command to filter out some of the data. Let’s say we want to filter out departure delay times greater than 1:
 
 ```{r}
-sleepstudy %>%
-  filter(Reaction > 200)
+flights %>%
+  filter(dep_delay > 1)
 ```
 
-Or we can also filter by days. Let’s pick day six for example. **Use the ampersand (&) to make more than one filter active.**
+Or we can also add more than one filter. Let’s say we want to filter the depature delays > 1 AND are coming from the JFK airport. 
 
 ```{r}
-sleepstudy %>%
-  filter(Reaction > 200 & Days == 6)
+flights %>%
+  filter(dep_delay > 1 & origin == "JFK")
 ```
 
 You can also use “or” reasoning so a condition is **either one or the other.** Use the **straight line (\|)** for the “or” reasoning. Note that this yields more results than the and reasoning.
 
 ```{r}
-sleepstudy %>%
-  filter(Reaction > 200 | Days == 6) # either greater than 200ms OR is day 6
+flights %>%
+  filter(dep_delay > 1 | origin == "JFK") # either has a departure delay > 1 OR is coming from JFK
 ```
 
-### `arrange()` command
+### `arrange()`
 
-the `arrange()` command changes the order of the rows based on the value of the columns. For example, this one below **arranges increasing reaction time by subject.**
+the `arrange()` command changes the order of the rows based on the value of the columns. For example, this one below arranges the year, month, and day by departure delay. 
 
 ```{r}
-sleepstudy %>%
-  arrange(Reaction, Subject)
+flights %>%
+  arrange(year, month, day, dep_delay)
 ```
 
 In this code below, the results are arranged by descending reaction time.
 
 ```{r}
-sleepstudy %>%
-  arrange(desc(Reaction))
+flights %>%
+  arrange(desc(dep_delay))
 ```
 
-### `distinct()` and `count()` command
+### `distinct()` and `count()`
 
-`distinct` finds all the unique rows in a data set and then primarily operates on those rows. I’m actually going to be using a different data set. This is the Dark Triad data set.
-
+`distinct` finds all the unique rows in a data set and then primarily operates on those rows. 
 ```{r}
-SD3_data <- read_csv("C://Users//thomp//remote//r-reference//downloaded_datasets//SD3_data.csv")
-print(SD3_data)
+flights %>%
+  distinct() # finds any duplicate values (if any)
+# looks like there are none!
 ```
 
-Next, we get rid of the duplicates (if any)
+Next we are going to find all the unique pairs of origin and destination.
 
 ```{r}
-SD3_data %>%
-  distinct()
-```
-
-Next we are going to find all the unique pairs in country (V28) and P1 (“I like gettingto get revenge on authorities”).
-
-```{r}
-SD3_data %>%
-  distinct(P1, country)
+flights %>%
+  distinct(origin, dest)
 ```
 
 Alternatively, **you can keep all the other columns using `.keep_all=TRUE`**.
 
 ```{r}
-SD3_data %>%
-  distinct(P1, country, .keep_all=TRUE)
+flights %>%
+  distinct(origin, dest, .keep_all=TRUE)
 ```
 
 You can also use the `count()` command to find the number of occurrences instead.
 
 ```{r}
-SD3_data %>%
-  count(P1, country, sort=TRUE)
+flights %>%
+  count(origin, dest, sort=TRUE)
 ```
 ## Columns
+There are four functions we can use to change columns without affecting the rows. 
+- `mutate()`
+- `select()`
+- `rename()`
+- `relocate`
 
+### `mutate()`
+First I’m going to use mutate. Mutate is used when you want to add new columns calculated from other ones. 
+I want to add three new columns: `gain`, `hours`, and `gain_per_hr`. 
+```{r}
+flights %>%
+  mutate(
+    gain = dep_delay - arr_delay,
+    hours = air_time / 60,
+    gain_per_hour = gain / hours,
+    .keep = "used" # indicates that I want to keep the columns I used in the function. 
+  )
+```
+We can use `.before` and `.after` to put the columns before or after a specific column. 
+```{r}
+flights %>%
+  mutate(
+    gain = dep_delay - arr_delay,
+    hours = air_time / 60,
+    gain_per_hour = gain / hours,
+    .before = 1
+  )
+```
+```{r}
+flights %>%
+  mutate(
+    gain = dep_delay - arr_delay,
+    hours = air_time / 60,
+    gain_per_hour = gain / hours,
+    .after = 1
+  )
+```
