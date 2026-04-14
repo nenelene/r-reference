@@ -1,0 +1,104 @@
+---
+title: "core syntax notes"
+output: pdf_document
+---
+
+# Core syntax, basic data handling in tidyverse
+
+## Materials needed
+
+-   `library(tidyverse)`
+-   `library(dbplyr)`
+
+## Prerequisites and intro to dplyr
+
+First, load tidyverse:
+
+```{r}
+library(tidyverse)
+```
+
+Then, we need to load some data. We are going to load the sleep study data. This is what we are going to be using.
+
+```{r}
+library(lme4)
+data(sleepstudy)
+head(sleepstudy)
+```
+
+### `filter()` command
+
+Next we can use the `filter()` command to filter out some of the data. Let’s say we want to filter out reaction times greater than 200ms:
+
+```{r}
+sleepstudy %>%
+  filter(Reaction > 200)
+```
+
+Or we can also filter by days. Let’s pick day six for example. **Use the ampersand (&) to make more than one filter active.**
+
+```{r}
+sleepstudy %>%
+  filter(Reaction > 200 & Days == 6)
+```
+
+You can also use “or” reasoning so a condition is **either one or the other.** Use the **straight line (\|)** for the “or” reasoning. Note that this yields more results than the and reasoning.
+
+```{r}
+sleepstudy %>%
+  filter(Reaction > 200 | Days == 6) # either greater than 200ms OR is day 6
+```
+
+### `arrange()` command
+
+the `arrange()` command changes the order of the rows based on the value of the columns. For example, this one below **arranges increasing reaction time by subject.**
+
+```{r}
+sleepstudy %>%
+  arrange(Reaction, Subject)
+```
+
+In this code below, the results are arranged by descending reaction time.
+
+```{r}
+sleepstudy %>%
+  arrange(desc(Reaction))
+```
+
+### `distinct()` and `count()` command
+
+`distinct` finds all the unique rows in a data set and then primarily operates on those rows. I’m actually going to be using a different data set. This is the Dark Triad data set.
+
+```{r}
+SD3_data <- read_csv("C://Users//thomp//remote//r4ds-2e//downloaded_datasets//SD3_data.csv")
+print(SD3_data)
+```
+
+Next, we get rid of the duplicates (if any)
+
+```{r}
+SD3_data %>%
+  distinct()
+```
+
+Next we are going to find all the unique pairs in country (V28) and P1 (“I like gettingto get revenge on authorities”).
+
+```{r}
+SD3_data %>%
+  distinct(P1, country)
+```
+
+Alternatively, **you can keep all the other columns using `.keep_all=TRUE`**.
+
+```{r}
+SD3_data %>%
+  distinct(P1, country, .keep_all=TRUE)
+```
+
+You can also use the `count()` command to find the number of occurrences instead.
+
+```{r}
+SD3_data %>%
+  count(P1, country, sort=TRUE)
+```
+
