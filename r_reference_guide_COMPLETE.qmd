@@ -221,4 +221,7 @@ flights %>%
 
 {{< pagebreak >}}
 
-
+# Grouping and Summarizing
+## Materials needed
+  - `tidyverse`
+##
