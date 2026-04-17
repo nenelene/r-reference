@@ -1,5 +1,5 @@
 ---
-title: "R Reference Notes"
+title: "R Reference Guide"
 author: "Sydney Thompson"
 format: 
   docx:
@@ -221,4 +221,4 @@ flights %>%
 
 {{< pagebreak >}}
 
-TEST
+
