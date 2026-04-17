@@ -1,6 +1,6 @@
 ---
-title: "core syntax notes"
-output: html_notebook
+title: "R reference notes"
+output: html_document
 ---
 
 # Core syntax, basic data handling in tidyverse
@@ -22,7 +22,7 @@ Then, we need to load some data. We are going to load the flights data. This is 
 
 ```{r}
 library(nycflights13)
-flights
+head(flights)
 ```
 
 ### `filter()`
@@ -30,7 +30,7 @@ flights
 Next we can use the `filter()` command to filter out some of the data. Let’s say we want to filter out departure delay times greater than 1:
 
 ```{r}
-flights %>%
+flights_1 <- flights %>%
   filter(dep_delay > 1)
 ```
 
@@ -219,5 +219,3 @@ flights %>%
     .after = dep_time
   )
 ```
-
-\newpage
