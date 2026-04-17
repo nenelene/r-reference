@@ -3,7 +3,7 @@ title: "core syntax notes"
 output: html_notebook
 ---
 
-# Core syntax, basic data handling in tidyverse 
+# Core syntax, basic data handling in tidyverse
 
 ## Materials needed
 
@@ -219,4 +219,5 @@ flights %>%
     .after = dep_time
   )
 ```
+
 \newpage
