@@ -2,20 +2,19 @@
 title: "R Reference Guide"
 author: "Sydney Thompson"
 format: 
-  docx:
+  html:
     toc: true
-    toc-depth: 3
+    toc-title: "Table of Contents"
     number-sections: true
 ---
 
 {{< pagebreak >}}
 
-# Core syntax, basic data handling in tidyverse
+# Basic data transformation in `tidyverse`
 
 ## Materials needed
 
--   `library(tidyverse)`
--   `library(dbplyr)`
+-   `library(dplyr)`
 
 ## Rows
 
@@ -139,7 +138,14 @@ flights %>%
     )
 ```
 
-```{r} flights %>%   mutate(     gain = dep_delay - arr_delay,     hours = air_time / 60,     gain_per_hour = gain / hours,     .after = 1   )}
+```{r}
+flights %>%  
+  mutate(     
+    gain = dep_delay - arr_delay,     
+    hours = air_time / 60,     
+    gain_per_hour = gain / hours,     
+    .after = 1   
+    )
 ```
 
 ### `select()`
@@ -198,7 +204,7 @@ flights %>%
   rename(tail_num = tailnum)
 ```
 
-If you have a bunch of inconsistently named columns and it would be painful to fix them all by hand, check out [`janitor::clean_names()`](https://sfirke.github.io/janitor/reference/clean_names.html) which provides some useful automated cleaning.
+If you have a bunch of inconsistently named columns and it would be painful to fix them all by hand, check out `janitor::clean_names()`which provides some useful automated cleaning.
 
 ### `relocate()`
 
@@ -221,7 +227,265 @@ flights %>%
 
 {{< pagebreak >}}
 
-# Grouping and Summarizing
+## Grouping and Summarizing
+
+### `group_by()`
+
+The `group_by` function allows us to group data into groups meaningful for analysis.
+
+```{r}
+flights %>%
+  group_by(month)
+```
+
+If you look at the top, you can see `Groups:month [12]` indicating that the output is “grouped by” month. So subsequent operations will now group by month.
+
+### `summarize()`
+
+the `summarize` function allows us to calculate a single summary statistic, which reduces the dataframe to have a single row for each group.
+
+```{r}
+flights %>%
+  group_by(month) %>%
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE) # make sure to get rid of NA values
+  )
+```
+
+You can also use `n()` to return the number of rows in each group.
+
+```{r}
+flights %>%
+  group_by(month) %>%
+  summarize(
+    avg_delay = mean(dep_delay, na.rm = TRUE), # make sure to get rid of NA values
+    n = n()
+  )
+```
+
+{{< pagebreak >}}
+
+# Data tidying
+
 ## Materials needed
-  - `tidyverse`
-##
+
+-   `library(tidyr)`
+
+Since we already loaded tidyverse once, we don’t need to do it again, but we do need to use `tidyr` for this.
+
+## Why tidy data?
+
+There are two main advantages to tidying data.
+
+1.  Consistency in storing data helps you learn the tools that work with it since they have an underlying uniformity
+2.  Placing variables in columns allows R to work more naturally since you are working with vectors of values.
+
+![](images/clipboard-552847137.png)
+
+![](images/clipboard-341784791.png)
+
+It turns raw, disorganized data into a structured format where every variable is a column, each observations is a row, and each observational unit is in a table. This saves time and enhances accuracy. It’s sort of like sorting food based on food group in your kitchen, so it is easier to access cook with them.
+
+## Lengthening, widening, and pivoting data
+
+### `pivot_longer()`
+
+For this, we’re going to use the messy datasets. Note that messy ≠ missing data! Data can just be duplicated, miss titles, or have typos.
+
+```{r}
+billboard # load up the billboard dataset from the tidyr datasets
+```
+
+Next, we are going to use `pivot_longer()`. For this one, every observation is a single song. The first three columns (`artist`, `track`, `date.entered`) are variables that describe the song. Then we have 76 other columns, `wk1`-`wk76`, that describe the rank of each song for each week. However, since there so many columns as seen below, we are going to use `pivot_longer` organize the columns into values.
+
+```{r}
+billboard %>%
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", # organizes
+    values_to = "rank" 
+  )
+```
+
+In `pivot_longer()`, the function uses three arguments:
+
+-   `cols` - specifies which columns need to be pivoted (in other words, which columns are NOT variables
+
+    -   Uses the same syntax as `select()`
+
+        -   e.g., could use `!c(artist, track, date.entered)` or `starts_with("wk")`
+
+-   `names_to` - names the variable stored in the **column names**, we named that variable `week`.
+
+-   `values_to` - names the variable stored in the **cell values**, we named that variable `rank`.
+
+We can also use `values_drop_na` to get rid of the NA values.
+
+```{r}
+billboard %>%
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", # organizes
+    values_to = "rank", 
+    values_drop_na = TRUE
+  )
+```
+
+The data is tidy now, BUT we could also parse the week numbers as actual numbers using `parse_number` in the mutate function. This will extract the numbers from a string.
+
+```{r}
+billboard %>%
+  pivot_longer(
+    cols = starts_with("wk"), 
+    names_to = "week", # organizes
+    values_to = "rank", 
+    values_drop_na = TRUE
+  ) %>%
+  mutate(
+    week = parse_number(week)
+  )
+```
+
+#### How does `pivot_longer()` even work?
+
+We are going to make a `tribble()` for this, so it’s easier to understand. Let’s say we have two trials in which participants’ sleep was recorded in a small experiment (in hrs):
+
+```{r}
+df <- tribble(
+  ~name, ~sleep1, ~sleep2, 
+  "Bob", 8.5, 8.2, 
+  "Ted", 7.1, 7.5, 
+  "Carol", 6.2, 7.1, 
+  "Alice", 8.1, 8.7
+)
+df
+```
+
+We want our new dataset to have three variables, `name`, `trial`, and `duration (hrs)`.
+
+```{r}
+df %>% 
+  pivot_longer(
+    cols = c(sleep1, sleep2), 
+    names_to = "trial", 
+    values_to = "duration (hrs)"
+  )
+```
+
+So in short it looks something like this:
+
+![](images/clipboard-845337000.png)
+
+#### Multiple variables
+
+Having multiple variables can a be a bit more tricky. Let’s use the `who2` dataset for example:
+
+```{r}
+who2
+```
+
+This dataset covers tuberculosis diagnoses. We already have country and year, but the other ones are tricky. The “m” and “f” stand for male and female respectively, and the `sp`/`rel`/`ep` show the method of diagnosis.
+
+So we are going to convert these to method of diagnosis, sex, and age.
+
+```{r}
+who2 %>%
+  pivot_longer(
+    cols = !c(country, year), 
+    names_to = c("diagnosis", "sex", "age"), 
+    names_sep = "_", # separates the words
+    values_to = "count"
+  )
+```
+
+#### Data and variable names in the column headers
+
+Another tricky thing is when the column names include a mix of variable values and names. For example, look at the `household` dataset:
+
+```{r}
+household
+```
+
+Note how two of the columns contain two variables (`dob`, `name`) and the values of another (`child`, with values 1 or 2). We need to use the `.value` sentinel. This is where it tells pivot to override the usual `values_to` argument which uses the first component of the pivoted column name as a variable name.
+
+```{r}
+household %>%
+  pivot_longer(
+    cols = !family, 
+    names_to = c(".value", "child"), # sseparate the dob from child 
+    names_sep = "_", 
+    values_drop_na = TRUE
+  )
+```
+
+If it’s still confusing, it can be summarized this way:
+
+![](images/clipboard-4231082205.png)
+
+### `pivot_wider()`
+
+Right now we’ve used `pivot_longer()` to solve the issue of values ending up as column names. Next, we’ll use `pivot_wider`, which makes datasets wider by increasing columns and reducing rows. This is very common in governmental data. For example, lets use the `cms_patient_experience` dataset:
+
+```{r}
+cms_patient_experience
+```
+
+Notice how the organization is spread across six rows. Each row is for each measurement taken in the organization. We can see the complete set of values for `measure_cd` and `measure_title` by using `distinct()`:
+
+```{r}
+cms_patient_experience %>%
+  distinct(measure_cd, measure_title)
+```
+
+Neither of these columns are good variable names. We’re going to use `measure_cd`, but in real analysis you need better, shorter names.
+
+`pivot_wider()` has the opposite to `pivot_longer()`. So instead of choosing new column names, we provide existing columns that define the values and the column name.
+
+```{r}
+cms_patient_experience %>%
+  pivot_wider(
+    names_from = measure_cd, 
+    values_from = prf_rate
+  )
+```
+
+So in other words, it did something like this:
+
+![We still have multiple rows for organization, so we need to tell `pivot_wider` which columns uniquely identify each row. So it’s the values that start with “org”:](images/clipboard-4167617857.png)
+
+```{r}
+cms_patient_experience %>%
+  pivot_wider(
+    id_cols = starts_with("org"), 
+    names_from = measure_cd, 
+    values_from = prf_rate
+  )
+```
+
+```{r}
+df <- tribble(
+  ~name, ~trial, ~hrs, 
+  "Bob","sleep1",8.5,	
+  "Bob","sleep2",8.2,	
+  "Ted","sleep1",7.1,
+  "Ted","sleep2",7.5, 
+  "Carol","sleep1",	6.2, 	
+  "Carol","sleep2",7.1, 		
+  "Alice","sleep1",8.1, 	
+  "Alice","sleep2",8.7
+)
+df
+```
+
+So now that we have our table, we can take the values from the `hours` columns and the names from the `trial` column:
+
+```{r}
+df %>%
+  pivot_wider(
+    names_from = trial, 
+    values_from = hrs
+  )
+```
+
+{{< pagebreak >}} 
+
