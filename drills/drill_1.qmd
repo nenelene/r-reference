@@ -1,0 +1,83 @@
+---
+title: "drill 1"
+author: "Sydney Thompson"
+format: html
+editor: visual
+---
+
+# Chat Drill 1
+
+## What we have to do
+
+ChatGPT has given us a tibble to work with. Meanwhile, we need to fix this script we generated.
+
+```{r}
+library(tibble)
+library(tidyverse)
+
+df <- tibble(
+  id = c(1,1,1,2,2,2,3,3,3,4,4,4),
+  day = c("1","2","3","1","2","3","1","2","3","1","2","3"),
+  group = c("A","A","A","B","B","B","A","A","A","B","B","B"),
+  mood = c(5, 4, -999, 3, 2, 3, 4, 5, 5, 1, -999, 2),
+  word_count = c("100","120","","80","90","85","110","","130","70","60","")
+)
+df
+```
+
+## The script
+
+Imagine a grad student comes up to you and gives you a script. They say, “It works… I think.”
+
+```{r}
+df$day <- as.numeric(df$day) # redundant and don’t need
+
+df2 <- df[df$group == "A" | df$group == "B", ] # redundant and don’t need
+
+df2$mood2 <- ifelse(df2$mood == -999, NA, df2$mood) # can use mutate for this and na_if
+
+means <- tapply(df2$mood2, df2$id, mean) # can use dplyr for this
+
+df3 <- data.frame(id = names(means), avg = means) # get rid of, makes data confusing. puts the variable names as values for some reason??
+df3
+df3$id <- as.numeric(df3$id) # don’t need, leads to NA values
+df3$id
+df4 <- merge(df3, df2, by = "id") # also leads to NA values
+
+df4 <- df4[!duplicated(df4$id), ] # gives nothing
+
+df4$high_mood <- ifelse(df4$avg > 4, 1, 0) # gives a logical(0)
+
+tapply(df4$high_mood, df4$group, mean) # gives a logical(0)
+
+df4$word_count <- as.character(df4$word_count) # gives character(0)
+
+df4$word_count[df4$word_count == ""] <- NA # why put an NA?? need to put an if statement here if you want the blank ones as NA
+
+df4$word_count <- as.numeric(df4$word_count) # gives nothing
+
+cor(df4$avg, df4$word_count) # gives an error
+```
+
+### Rewritten script
+
+```{r}
+# 1. clean data first
+df <- df %>%
+ mutate(
+   mood = na_if(mood, -999),
+   word_count = na_if(word_count, ""),
+   word_count = as.numeric(word_count),
+   day = as.numeric(word_count)
+ )
+# 2. find means
+df <- df %>%
+  group_by(id, group) %>% # keep groups attached to person
+  summarize(
+    mood_m = round(mean(mood, na.rm=TRUE), 2),
+    wc_m = mean(word_count, na.rm=TRUE),
+    .groups = "drop" # explicitly ungroups the result
+  )
+# 3. example analysis
+cor(df$mood_m, df$wc_m, use = "complete.obs")
+```
